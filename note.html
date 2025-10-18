@@ -3,147 +3,171 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>View Secure Note</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
+  <title>View Note</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
   <style>
-    body { box-sizing: border-box; }
-    .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-    .glass-effect { background: rgba(255, 255, 255, 0.25); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.18); }
-    .fade-in { animation: fadeIn 0.5s ease-out; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    .custom-scrollbar::-webkit-scrollbar { width: 8px; }
-    .custom-scrollbar::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.1); border-radius: 4px; }
-    .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.3); border-radius: 4px; }
-    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.5); }
+    /* Add a simple fade-in for the loaded content */
+    .fade-in {
+      animation: fadeIn 0.5s ease-in-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+    /* This makes sure long notes wrap correctly */
+    pre {
+      white-space: pre-wrap;       /* CSS 3 */
+      white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+      white-space: -pre-wrap;      /* Opera 4-6 */
+      white-space: -o-pre-wrap;    /* Opera 7 */
+      word-wrap: break-word;       /* Internet Explorer 5.5+ */
+    }
   </style>
-  <style>@view-transition { navigation: auto; }</style>
 </head>
-<body class="min-h-full gradient-bg">
-  <main class="relative container mx-auto px-6 py-8 max-w-4xl min-h-screen flex items-center justify-center">
-    
-    <div id="note-container" class="glass-effect rounded-3xl p-8 shadow-2xl w-full fade-in">
+<body class="min-h-full bg-gradient-to-br from-slate-50 to-blue-50">
+
+  <main class="container mx-auto px-6 py-8 max-w-2xl">
+    <header class="text-center mb-8">
+      <a href="/" class="flex items-center justify-center text-blue-600 hover:text-blue-800 transition-colors">
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+        Create a new note
+      </a>
+    </header>
+
+    <div class="bg-white rounded-2xl shadow-lg p-8 min-h-[300px]">
       
-      <div class="flex items-center mb-6">
-        <div class="bg-white bg-opacity-20 p-3 rounded-full mr-4">
-          <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-        </div>
-        <div>
-          <h1 id="note-heading" class="text-3xl font-bold text-white">Secure Note</h1>
-        </div>
+      <div id="loading-state" class="text-center py-12">
+        <svg class="animate-spin h-8 w-8 text-blue-600 mx-auto" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <p class="mt-4 text-lg text-gray-600">Loading note...</p>
       </div>
 
-      <div id="note-content" class="bg-white bg-opacity-10 rounded-2xl p-6 min-h-[200px]">
-        <div id="loading-state" class="flex flex-col items-center justify-center h-full">
-          <svg class="animate-spin h-8 w-8 text-white mb-4" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          <p class="text-white text-opacity-80">Loading secure note...</p>
-        </div>
-        
-        <div id="error-state" class="hidden flex-col items-center justify-center h-full">
-           <svg class="w-12 h-12 text-red-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-           <p id="error-message" class="text-red-100 font-semibold text-center">Note not found or has expired.</p>
-        </div>
+      <div id="error-state" class="hidden text-center py-12">
+        <svg class="w-12 h-12 text-red-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        <p class="mt-4 text-2xl font-semibold text-red-700">Note Not Found</p>
+        <p class="mt-2 text-gray-600">This note may have been deleted or the link is incorrect.</p>
+      </div>
 
-        <pre id="note-display" class="hidden w-full p-2 bg-white bg-opacity-90 rounded-xl resize-none text-gray-800 text-lg leading-relaxed shadow-lg custom-scrollbar whitespace-pre-wrap font-sans min-h-[200px]"></pre>
+      <div id="password-state" class="hidden text-center py-12">
+        <svg class="w-12 h-12 text-blue-600 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+        <p class="mt-4 text-2xl font-semibold text-gray-800">Password Required</p>
+        <p class="mt-2 text-gray-600">This note is encrypted. Please enter the password to view it.</p>
+        <form id="password-form" class="mt-6 max-w-sm mx-auto">
+            <input type="password" id="password-input" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="Enter password...">
+            <button type="submit" class="mt-4 w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
+                Decrypt
+            </button>
+            <p id="password-error" class="text-red-600 text-sm mt-2 hidden">Wrong password. Please try again.</p>
+        </form>
+      </div>
+
+      <div id="note-content" class="hidden">
+        <pre id="note-text" class="text-lg text-gray-800 leading-relaxed font-sans"></pre>
       </div>
 
     </div>
   </main>
 
   <script>
-    // Secure AES decryption function
-    function realDecrypt(encryptedText, password) {
-      try {
-        const bytes = CryptoJS.AES.decrypt(encryptedText, password);
-        const plaintext = bytes.toString(CryptoJS.enc.Utf8);
-        if (!plaintext) {
-          throw new Error('Invalid password or corrupted data');
-        }
-        return plaintext;
-      } catch (error) {
-        console.error('Decryption failed:', error);
-        throw new Error('Failed to decrypt note - check your password');
-      }
-    }
+    // 3. UPDATED JAVASCRIPT LOGIC
+    
+    // Store encrypted content here when needed
+    let encryptedContentToDecrypt = '';
 
-    // UI state functions
-    function showLoading() {
-      document.getElementById('loading-state').classList.remove('hidden');
-      document.getElementById('error-state').classList.add('hidden');
-      document.getElementById('note-display').classList.add('hidden');
-    }
+    // Get references to all UI states
+    const loadingDiv = document.getElementById('loading-state');
+    const errorDiv = document.getElementById('error-state');
+    const contentDiv = document.getElementById('note-content');
+    const noteText = document.getElementById('note-text');
+    const passwordDiv = document.getElementById('password-state');
+    const passwordForm = document.getElementById('password-form');
+    const passwordInput = document.getElementById('password-input');
+    const passwordError = document.getElementById('password-error');
 
-    function showError(message) {
-      document.getElementById('loading-state').classList.add('hidden');
-      document.getElementById('error-state').classList.remove('hidden');
-      document.getElementById('error-state').classList.add('flex');
-      document.getElementById('note-display').classList.add('hidden');
-      document.getElementById('error-message').textContent = message;
-      document.getElementById('note-heading').textContent = "Access Denied";
-    }
-
-    function showNote(plaintext) {
-      document.getElementById('loading-state').classList.add('hidden');
-      document.getElementById('error-state').classList.add('hidden');
-      document.getElementById('note-display').classList.remove('hidden');
-      document.getElementById('note-display').textContent = plaintext;
-    }
-
-    // Main function to load the note
-    window.addEventListener('load', async () => {
-      showLoading();
-      
+    async function loadNote() {
       try {
         // 1. Get the note ID from the URL
         const params = new URLSearchParams(window.location.search);
         const noteId = params.get('id');
 
         if (!noteId) {
-          throw new Error("No note ID provided in the URL.");
+          throw new Error('No note ID provided.');
         }
 
-        // 2. Call the Netlify function to get the note
+        // 2. Call our "get-note" function
         const response = await fetch(`/.netlify/functions/get-note?id=${noteId}`);
-        
-        if (response.status === 404) {
-             throw new Error("Note not found or it has expired.");
-        }
+
         if (!response.ok) {
-            throw new Error("Could not retrieve the note.");
+          throw new Error('Note not found.');
         }
 
-        const note = await response.json();
-        let plaintext = note.content;
+        // 3. Get the JSON data from the function
+        const noteData = await response.json();
 
-        // 3. Handle password protection
-        if (note.hasPassword) {
-          const password = prompt("This note is password protected. Please enter the password:");
-          
-          if (!password) {
-            showError("Password required to view this note.");
-            return;
-          }
-          
-          // 4. Decrypt the note
-          try {
-            plaintext = realDecrypt(note.content, password);
-          } catch (e) {
-            showError("Invalid password. Access denied.");
-            return;
-          }
+        // 4. Check if the note is encrypted
+        //    (Assumes your server returns: { encrypted: true, content: "..." } or { encrypted: false, content: "..." })
+        if (noteData.encrypted) {
+          // Note IS encrypted
+          encryptedContentToDecrypt = noteData.content; // Store content for decryption
+          loadingDiv.classList.add('hidden');
+          passwordDiv.classList.remove('hidden'); // Show password prompt
+          passwordDiv.classList.add('fade-in');
+        } else {
+          // Note is NOT encrypted ("pass less")
+          noteText.textContent = noteData.content;
+          loadingDiv.classList.add('hidden');
+          contentDiv.classList.remove('hidden');
+          contentDiv.classList.add('fade-in');
         }
-        
-        // 5. Display the note
-        showNote(plaintext);
 
       } catch (error) {
-        console.error(error);
-        showError(error.message);
+        // Hide loading, show general error
+        loadingDiv.classList.add('hidden');
+        errorDiv.classList.remove('hidden');
+      }
+    }
+
+    // Handle the password form submission
+    passwordForm.addEventListener('submit', (event) => {
+      event.preventDefault(); // Stop the form from reloading the page
+      
+      const password = passwordInput.value;
+      if (!password || !encryptedContentToDecrypt) {
+        passwordError.textContent = 'An unknown error occurred. Please refresh.';
+        passwordError.classList.remove('hidden');
+        return;
+      }
+
+      try {
+        // Attempt to decrypt using AES (this must match your encryption method)
+        const decrypted = CryptoJS.AES.decrypt(encryptedContentToDecrypt, password);
+        const decryptedString = decrypted.toString(CryptoJS.enc.Utf8);
+
+        if (!decryptedString) {
+          // This happens if the password is wrong
+          throw new Error('Wrong password');
+        }
+
+        // SUCCESS!
+        noteText.textContent = decryptedString;
+        passwordDiv.classList.add('hidden');
+        contentDiv.classList.remove('hidden');
+        contentDiv.classList.add('fade-in');
+        passwordError.classList.add('hidden'); // Hide error if it was showing
+
+      } catch (e) {
+        // FAILURE! (Wrong password)
+        passwordError.textContent = 'Wrong password. Please try again.';
+        passwordError.classList.remove('hidden');
+        passwordInput.value = ""; // Clear the wrong password
       }
     });
+
+    // Run the loadNote function as soon as the page loads
+    loadNote();
   </script>
 </body>
 </html>
