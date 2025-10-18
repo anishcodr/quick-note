@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>View Note</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Add a simple fade-in for the loaded content */
+    .fade-in {
+      animation: fadeIn 0.5s ease-in-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+    /* This makes sure long notes wrap correctly */
+    pre {
+      white-space: pre-wrap;       /* CSS 3 */
+      white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+      white-space: -pre-wrap;      /* Opera 4-6 */
+      white-space: -o-pre-wrap;    /* Opera 7 */
+      word-wrap: break-word;       /* Internet Explorer 5.5+ */
+    }
+  </style>
+</head>
+<body class="min-h-full bg-gradient-to-br from-slate-50 to-blue-50">
+
+  <main class="container mx-auto px-6 py-8 max-w-2xl">
+    <header class="text-center mb-8">
+      <a href="/" class="flex items-center justify-center text-blue-600 hover:text-blue-800 transition-colors">
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+        Create a new note
+      </a>
+    </header>
+
+    <div class="bg-white rounded-2xl shadow-lg p-8 min-h-[300px]">
+      
+      <div id="loading-state" class="text-center py-12">
+        <svg class="animate-spin h-8 w-8 text-blue-600 mx-auto" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <p class="mt-4 text-lg text-gray-600">Loading note...</p>
+      </div>
+
+      <div id="error-state" class="hidden text-center py-12">
+        <svg class="w-12 h-12 text-red-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        <p class="mt-4 text-2xl font-semibold text-red-700">Note Not Found</p>
+        <p class="mt-2 text-gray-600">This note may have been deleted or the link is incorrect.</p>
+      </div>
+
+      <div id="note-content" class="hidden">
+        <pre id="note-text" class="text-lg text-gray-800 leading-relaxed font-sans"></pre>
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    async function loadNote() {
+      const loadingDiv = document.getElementById('loading-state');
+      const errorDiv = document.getElementById('error-state');
+      const contentDiv = document.getElementById('note-content');
+      const noteText = document.getElementById('note-text');
+
+      try {
+        // 1. Get the note ID from the URL (e.g., ?id=kRz7bN)
+        const params = new URLSearchParams(window.location.search);
+        const noteId = params.get('id');
+
+        if (!noteId) {
+          throw new Error('No note ID provided.');
+        }
+
+        // 2. Call our new "get-note" function
+        const response = await fetch(`/.netlify/functions/get-note?id=${noteId}`);
+
+        if (!response.ok) {
+          throw new Error('Note not found.');
+        }
+
+        // 3. Get the text content back from the function
+        const noteData = await response.json();
+
+        // 4. Display the text content safely
+        // Using .textContent prevents any malicious HTML from running
+        noteText.textContent = noteData.content;
+        
+        // Hide loading, show content
+        loadingDiv.classList.add('hidden');
+        contentDiv.classList.remove('hidden');
+        contentDiv.classList.add('fade-in');
+
+      } catch (error) {
+        // Hide loading, show error
+        loadingDiv.classList.add('hidden');
+        errorDiv.classList.remove('hidden');
+      }
+    }
+
+    // Run the function as soon as the page loads
+    loadNote();
+  </script>
+</body>
+</html>

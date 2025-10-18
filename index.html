@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="en">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quick Note Share</title>
+  <script src="/_sdk/data_sdk.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+        body {
+            box-sizing: border-box;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .pulse-success {
+            animation: pulseSuccess 0.6s ease-in-out;
+        }
+        
+        @keyframes pulseSuccess {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+    </style>
+  <style>@view-transition { navigation: auto; }</style>
+ </head>
+ <body class="min-h-full bg-gradient-to-br from-slate-50 to-blue-50">
+  <main class="container mx-auto px-6 py-8 max-w-2xl"><!-- Header Section -->
+   <header class="text-center mb-12">
+    <div class="flex items-center justify-center mb-4">
+     <svg class="w-8 h-8 text-blue-600 mr-3" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+     </svg>
+     <h1 id="main-heading" class="text-4xl font-bold text-gray-800">Share Your Thoughts Instantly</h1>
+    </div>
+    <p id="tagline" class="text-lg text-gray-600 font-light">Simple. Fast. Private.</p>
+   </header><!-- Main Content -->
+   <div class="bg-white rounded-2xl shadow-lg p-8 mb-6">
+    <form id="note-form" class="space-y-6">
+     <div><label for="note-textarea" class="sr-only">Your note content</label> <textarea id="note-textarea" rows="8" placeholder="Type your note here..." class="w-full p-4 border-2 border-gray-200 rounded-xl resize-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none transition-all duration-200 text-gray-700 text-lg leading-relaxed" required></textarea>
+     </div><button type="submit" id="generate-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-300 text-lg"> <span id="button-text">Generate Shareable Link</span> <span id="loading-spinner" class="hidden ml-2">
+       <svg class="animate-spin h-5 w-5 inline" fill="none" viewbox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle> <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+       </svg></span> </button>
+    </form>
+   </div><!-- Result Area -->
+   <div id="result-area" class="hidden bg-green-50 border-2 border-green-200 rounded-2xl p-6">
+    <div class="flex items-center mb-4">
+     <svg class="w-6 h-6 text-green-600 mr-2" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+     </svg>
+     <h3 class="text-lg font-semibold text-green-800">Link Generated!</h3>
+    </div>
+    <div class="flex gap-3"><input type="text" id="generated-link" readonly class="flex-1 p-3 bg-white border border-green-300 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-400" placeholder="Your shareable link will appear here"> <button id="copy-btn" class="bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-6 rounded-lg transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-green-300"> Copy Link </button>
+    </div>
+    <p class="text-sm text-green-700 mt-3">Share this link with anyone to let them view your note.</p>
+   </div><!-- Error Message -->
+   <div id="error-message" class="hidden bg-red-50 border-2 border-red-200 rounded-2xl p-4 mt-4">
+    <div class="flex items-center">
+     <svg class="w-5 h-5 text-red-600 mr-2" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+     </svg>
+     <p class="text-red-800 font-medium">Something went wrong. Please try again.</p>
+    </div>
+   </div>
+  </main>
+  <script>
+        // Configuration object for editable features
+        const defaultConfig = {
+            main_heading: "Share Your Thoughts Instantly",
+            tagline: "Simple. Fast. Private.",
+            placeholder_text: "Type your note here...",
+            button_text: "Generate Shareable Link",
+            primary_color: "#2563eb",
+            accent_color: "#16a34a",
+            background_color: "#f8fafc",
+            text_color: "#1f2937",
+            font_family: "Inter"
+        };
+
+        // Data SDK handler
+        const dataHandler = {
+            onDataChanged(data) {
+                // This app is write-only for sharing notes
+                // We don't need to display existing notes
+            }
+        };
+
+        // Generate a unique ID for the note
+        function generateNoteId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        }
+
+        // Show loading state
+        function showLoading(show) {
+            const btn = document.getElementById('generate-btn');
+            const btnText = document.getElementById('button-text');
+            const spinner = document.getElementById('loading-spinner');
+            
+            if (show) {
+                btn.disabled = true;
+                btn.classList.add('opacity-75', 'cursor-not-allowed');
+                btnText.textContent = 'Generating...';
+                spinner.classList.remove('hidden');
+            } else {
+                btn.disabled = false;
+                btn.classList.remove('opacity-75', 'cursor-not-allowed');
+                btnText.textContent = window.elementSdk?.config?.button_text || defaultConfig.button_text;
+                spinner.classList.add('hidden');
+            }
+        }
+
+        // Show error message
+        function showError(message) {
+            const errorDiv = document.getElementById('error-message');
+            const errorText = errorDiv.querySelector('p');
+            errorText.textContent = message;
+            errorDiv.classList.remove('hidden');
+            errorDiv.classList.add('fade-in');
+            
+            setTimeout(() => {
+                errorDiv.classList.add('hidden');
+            }, 5000);
+        }
+
+        // Show success result
+        function showResult(noteId) {
+            const resultArea = document.getElementById('result-area');
+            const linkInput = document.getElementById('generated-link');
+            
+            // --- MODIFIED LINE ---
+          // Creates a link to a "note" page on your same site
+            const shareableLink = `${window.location.origin}/note?id=${noteId}`;
+            linkInput.value = shareableLink;
+            
+            resultArea.classList.remove('hidden');
+            resultArea.classList.add('fade-in', 'pulse-success');
+            
+            // Scroll to result
+            resultArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+s       }
+
+        // Handle form submission
+        async function handleSubmit(event) {
+            event.preventDefault();
+            
+            const textarea = document.getElementById('note-textarea');
+            const content = textarea.value.trim();
+            
+            if (!content) {
+                showError('Please enter some text for your note.');
+                return;
+            }
+
+            if (content.length > 10000) {
+                showError('Note is too long. Please keep it under 10,000 characters.');
+                return;
+            }
+
+            showLoading(true);
+            
+            try {
+            // --- THIS IS THE MODIFIED PART ---
+            // We're calling our new Netlify Function
+                const response = await fetch('/.netlify/functions/save-note', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: content }) // Send just the content
+            });
+            // --- END OF MODIFIED PART ---
+                
+                if (response.ok) {
+                // Get the { id: "..." } object back from our function
+                const result = await response.json(); 
+                    showResult(result.id); // Pass the ID to the showResult function
+                    textarea.value = ''; // Clear the form
+              nbsp; } else {
+                    showError('Failed to save your note. Please try again.');
+                }
+            } catch (error) {
+            console.error(error); // Log the actual error
+                showError('An unexpected error occurred. Please try again.');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Handle copy to clipboard
+        async function handleCopy() {
+            const linkInput = document.getElementById('generated-link');
+            const copyBtn = document.getElementById('copy-btn');
+            
+            try {
+                await navigator.clipboard.writeText(linkInput.value);
+                
+                const originalText = copyBtn.textContent;
+                copyBtn.textContent = 'Copied!';
+                copyBtn.classList.add('bg-green-700');
+                
+                setTimeout(() => {
+                    copyBtn.textContent = originalText;
+                    copyBtn.classList.remove('bg-green-700');
+                }, 2000);
+            } catch (error) {
+                // Fallback for older browsers
+                linkInput.select();
+                document.execCommand('copy');
+                
+                const originalText = copyBtn.textContent;
+                copyBtn.textContent = 'Copied!';
+                setTimeout(() => {
+                    copyBtn.textContent = originalText;
+                }, 2000);
+            }
+        }
+
+        // Render function for Element SDK
+        async function render(config) {
+            const mainHeading = document.getElementById('main-heading');
+            const tagline = document.getElementById('tagline');
+            const textarea = document.getElementById('note-textarea');
+            const buttonText = document.getElementById('button-text');
+            
+            // Update text content
+            mainHeading.textContent = config.main_heading || defaultConfig.main_heading;
+            tagline.textContent = config.tagline || defaultConfig.tagline;
+            textarea.placeholder = config.placeholder_text || defaultConfig.placeholder_text;
+            buttonText.textContent = config.button_text || defaultConfig.button_text;
+            
+            // Update colors
+            const primaryColor = config.primary_color || defaultConfig.primary_color;
+            const accentColor = config.accent_color || defaultConfig.accent_color;
+            const textColor = config.text_color || defaultConfig.text_color;
+            
+            // Apply colors to elements
+            document.documentElement.style.setProperty('--primary-color', primaryColor);
+            document.documentElement.style.setProperty('--accent-color', accentColor);
+            
+            const generateBtn = document.getElementById('generate-btn');
+            generateBtn.style.backgroundColor = primaryColor;
+            
+            const copyBtn = document.getElementById('copy-btn');
+            copyBtn.style.backgroundColor = accentColor;
+            
+            // Apply font family
+            const fontFamily = config.font_family || defaultConfig.font_family;
+            if (fontFamily && fontFamily !== 'Inter') {
+                document.body.style.fontFamily = `${fontFamily}, Inter, system-ui, -apple-system, sans-serif`;
+            }
+        }
+
+        // Initialize the application
+        async function init() {
+            // Initialize Data SDK
+            if (window.dataSdk) {
+                const initResult = await window.dataSdk.init(dataHandler);
+                if (!initResult.isOk) {
+                    console.error('Failed to initialize Data SDK');
+                }
+            }
+
+            // Initialize Element SDK
+            if (window.elementSdk) {
+                await window.elementSdk.init({
+                    defaultConfig,
+                    render,
+                    mapToCapabilities: (config) => ({
+                        recolorables: [
+                            {
+                                get: () => config.primary_color || defaultConfig.primary_color,
+                                set: (value) => {
+                                    config.primary_color = value;
+                                    window.elementSdk.setConfig({ primary_color: value });
+                                }
+                            },
+                            {
+                                get: () => config.accent_color || defaultConfig.accent_color,
+                                set: (value) => {
+                                    config.accent_color = value;
+                                    window.elementSdk.setConfig({ accent_color: value });
+                                }
+                            },
+                            {
+                                get: () => config.text_color || defaultConfig.text_color,
+                                set: (value) => {
+                                    config.text_color = value;
+                                    window.elementSdk.setConfig({ text_color: value });
+                                }
+                            }
+                        ],
+                        borderables: [],
+                        fontEditable: {
+                            get: () => config.font_family || defaultConfig.font_family,
+                            set: (value) => {
+                                config.font_family = value;
+                                window.elementSdk.setConfig({ font_family: value });
+                            }
+                        },
+                        fontSizeable: undefined
+                    }),
+                    mapToEditPanelValues: (config) => new Map([
+                        ['main_heading', config.main_heading || defaultConfig.main_heading],
+                        ['tagline', config.tagline || defaultConfig.tagline],
+                        ['placeholder_text', config.placeholder_text || defaultConfig.placeholder_text],
+                        ['button_text', config.button_text || defaultConfig.button_text]
+                    ])
+                });
+            }
+
+            // Set up event listeners
+            document.getElementById('note-form').addEventListener('submit', handleSubmit);
+            document.getElementById('copy-btn').addEventListener('click', handleCopy);
+
+            // Initial render
+            await render(window.elementSdk?.config || defaultConfig);
+        }
+
+        // Start the application
+        init();
+    </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9909781bb72a3d2a',t:'MTc2MDgwNTUzOS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
