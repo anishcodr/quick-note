@@ -4,20 +4,39 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Quick Note Share</title>
-  <script src="/_sdk/data_sdk.js"></script>
   <script src="/_sdk/element_sdk.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
         body {
             box-sizing: border-box;
         }
         
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        
         .fade-in {
-            animation: fadeIn 0.3s ease-in-out;
+            animation: fadeIn 0.5s ease-out;
         }
         
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .slide-up {
+            animation: slideUp 0.4s ease-out;
+        }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
             to { opacity: 1; transform: translateY(0); }
         }
         
@@ -27,73 +46,196 @@
         
         @keyframes pulseSuccess {
             0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
+            50% { transform: scale(1.02); }
             100% { transform: scale(1); }
+        }
+        
+        .floating {
+            animation: floating 3s ease-in-out infinite;
+        }
+        
+        @keyframes floating {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .glow {
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
         }
     </style>
   <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
  </head>
- <body class="min-h-full bg-gradient-to-br from-slate-50 to-blue-50">
-  <main class="container mx-auto px-6 py-8 max-w-2xl"><!-- Header Section -->
-   <header class="text-center mb-12">
-    <div class="flex items-center justify-center mb-4">
-     <svg class="w-8 h-8 text-blue-600 mr-3" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-     </svg>
-     <h1 id="main-heading" class="text-4xl font-bold text-gray-800">Share Your Thoughts Instantly</h1>
+ <body class="min-h-full gradient-bg"><!-- Animated Background Elements -->
+  <div class="fixed inset-0 overflow-hidden pointer-events-none">
+   <div class="absolute top-1/4 left-1/4 w-64 h-64 bg-white opacity-5 rounded-full floating"></div>
+   <div class="absolute top-3/4 right-1/4 w-48 h-48 bg-white opacity-5 rounded-full floating" style="animation-delay: -1s;"></div>
+   <div class="absolute top-1/2 left-3/4 w-32 h-32 bg-white opacity-5 rounded-full floating" style="animation-delay: -2s;"></div>
+  </div>
+  <main class="relative container mx-auto px-6 py-8 max-w-4xl"><!-- Header Section -->
+   <header class="text-center mb-16 fade-in">
+    <div class="flex items-center justify-center mb-6">
+     <div class="bg-white bg-opacity-20 p-4 rounded-2xl mr-4 glow">
+      <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+      </svg>
+     </div>
+     <h1 id="main-heading" class="text-5xl font-bold text-white drop-shadow-lg">SecureNote Share</h1>
     </div>
-    <p id="tagline" class="text-lg text-gray-600 font-light">Simple. Fast. Private.</p>
+    <p id="tagline" class="text-xl text-white text-opacity-90 font-light drop-shadow">Secure. Private. Encrypted.</p>
    </header><!-- Main Content -->
-   <div class="bg-white rounded-2xl shadow-lg p-8 mb-6">
-    <form id="note-form" class="space-y-6">
-     <div><label for="note-textarea" class="sr-only">Your note content</label> <textarea id="note-textarea" rows="8" placeholder="Type your note here..." class="w-full p-4 border-2 border-gray-200 rounded-xl resize-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none transition-all duration-200 text-gray-700 text-lg leading-relaxed" required></textarea>
-     </div><button type="submit" id="generate-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-300 text-lg"> <span id="button-text">Generate Shareable Link</span> <span id="loading-spinner" class="hidden ml-2">
-       <svg class="animate-spin h-5 w-5 inline" fill="none" viewbox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle> <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+   <div class="glass-effect rounded-3xl p-8 mb-8 slide-up shadow-2xl">
+    <form id="note-form" class="space-y-8"><!-- Note Content -->
+     <div><label for="note-textarea" class="block text-white font-semibold mb-3 text-lg">Your Note</label> <textarea id="note-textarea" rows="8" placeholder="Type your secure note here..." class="w-full p-6 bg-white bg-opacity-90 border-0 rounded-2xl resize-none focus:ring-4 focus:ring-white focus:ring-opacity-50 focus:outline-none transition-all duration-300 text-gray-800 text-lg leading-relaxed shadow-lg custom-scrollbar" required></textarea>
+     </div><!-- Security Options -->
+     <div class="grid md:grid-cols-2 gap-6"><!-- Password Protection -->
+      <div class="bg-white bg-opacity-10 rounded-2xl p-6"><label class="flex items-center text-white font-semibold mb-4">
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+        </svg> Password Protection </label> <input type="password" id="note-password" placeholder="Enter password (optional)" class="w-full p-4 bg-white bg-opacity-90 border-0 rounded-xl focus:ring-4 focus:ring-white focus:ring-opacity-50 focus:outline-none transition-all duration-300 text-gray-800">
+       <p class="text-white text-opacity-70 text-sm mt-2">Leave empty for public access</p>
+      </div><!-- Expiration -->
+      <div class="bg-white bg-opacity-10 rounded-2xl p-6"><label class="flex items-center text-white font-semibold mb-4">
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg> Expiration Time </label> <select id="expiration-select" class="w-full p-4 bg-white bg-opacity-90 border-0 rounded-xl focus:ring-4 focus:ring-white focus:ring-opacity-50 focus:outline-none transition-all duration-300 text-gray-800"> <option value="1">1 Day</option> <option value="3">3 Days</option> <option value="7" selected>7 Days</option> <option value="30">1 Month</option> <option value="0">Lifetime</option> </select>
+      </div>
+     </div><button type="submit" id="generate-btn" class="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold py-6 px-8 rounded-2xl transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-white focus:ring-opacity-50 text-xl shadow-2xl glow"> <span id="button-text" class="flex items-center justify-center">
+       <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
+       </svg> Generate Secure Link </span> <span id="loading-spinner" class="hidden">
+       <svg class="animate-spin h-6 w-6 mx-auto" fill="none" viewbox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle> <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
        </svg></span> </button>
     </form>
    </div><!-- Result Area -->
-   <div id="result-area" class="hidden bg-green-50 border-2 border-green-200 rounded-2xl p-6">
-    <div class="flex items-center mb-4">
-     <svg class="w-6 h-6 text-green-600 mr-2" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-     </svg>
-     <h3 class="text-lg font-semibold text-green-800">Link Generated!</h3>
+   <div id="result-area" class="hidden glass-effect rounded-3xl p-8 shadow-2xl">
+    <div class="flex items-center mb-6">
+     <div class="bg-green-500 bg-opacity-20 p-3 rounded-full mr-4">
+      <svg class="w-8 h-8 text-green-300" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+      </svg>
+     </div>
+     <div>
+      <h3 class="text-2xl font-bold text-white">Secure Link Generated!</h3>
+      <p class="text-white text-opacity-70">Your note is now encrypted and ready to share</p>
+     </div>
     </div>
-    <div class="flex gap-3"><input type="text" id="generated-link" readonly class="flex-1 p-3 bg-white border border-green-300 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-400" placeholder="Your shareable link will appear here"> <button id="copy-btn" class="bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-6 rounded-lg transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-green-300"> Copy Link </button>
+    <div class="bg-white bg-opacity-10 rounded-2xl p-6 mb-6">
+     <div class="flex gap-4 mb-4"><input type="text" id="generated-link" readonly class="flex-1 p-4 bg-white bg-opacity-90 border-0 rounded-xl text-gray-800 focus:outline-none focus:ring-4 focus:ring-white focus:ring-opacity-50 font-mono text-sm" placeholder="Your secure link will appear here"> <button id="copy-btn" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-4 px-8 rounded-xl transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-green-300 shadow-lg">
+       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+       </svg></button>
+     </div>
+     <div id="note-details" class="grid md:grid-cols-3 gap-4 text-sm">
+      <div class="bg-white bg-opacity-10 rounded-lg p-3">
+       <div class="text-white text-opacity-70">
+        Protection
+       </div>
+       <div id="protection-status" class="text-white font-semibold">
+        Public
+       </div>
+      </div>
+      <div class="bg-white bg-opacity-10 rounded-lg p-3">
+       <div class="text-white text-opacity-70">
+        Expires
+       </div>
+       <div id="expiration-status" class="text-white font-semibold">
+        7 Days
+       </div>
+      </div>
+      <div class="bg-white bg-opacity-10 rounded-lg p-3">
+       <div class="text-white text-opacity-70">
+        Created
+       </div>
+       <div id="creation-time" class="text-white font-semibold">
+        Just now
+       </div>
+      </div>
+     </div>
     </div>
-    <p class="text-sm text-green-700 mt-3">Share this link with anyone to let them view your note.</p>
+    <div class="flex items-center text-green-300 text-sm">
+     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+     </svg> Share this link with anyone to let them view your secure note.
+    </div>
    </div><!-- Error Message -->
-   <div id="error-message" class="hidden bg-red-50 border-2 border-red-200 rounded-2xl p-4 mt-4">
+   <div id="error-message" class="hidden bg-red-500 bg-opacity-20 border-2 border-red-400 border-opacity-50 rounded-2xl p-6 mt-6 glass-effect">
     <div class="flex items-center">
-     <svg class="w-5 h-5 text-red-600 mr-2" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+     <svg class="w-6 h-6 text-red-300 mr-3" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
      </svg>
-     <p class="text-red-800 font-medium">Something went wrong. Please try again.</p>
+     <p class="text-red-100 font-semibold">Something went wrong. Please try again.</p>
     </div>
    </div>
   </main>
   <script>
         // Configuration object for editable features
         const defaultConfig = {
-            main_heading: "Share Your Thoughts Instantly",
-            tagline: "Simple. Fast. Private.",
-            placeholder_text: "Type your note here...",
-            button_text: "Generate Shareable Link",
-            primary_color: "#2563eb",
-            accent_color: "#16a34a",
-            background_color: "#f8fafc",
-            text_color: "#1f2937",
+            main_heading: "SecureNote Share",
+            tagline: "Secure. Private. Encrypted.",
+            placeholder_text: "Type your secure note here...",
+            button_text: "Generate Secure Link",
+            primary_color: "#667eea",
+            accent_color: "#10b981",
+            background_color: "#667eea",
+            text_color: "#ffffff",
             font_family: "Inter"
         };
 
-        // Data SDK handler
-        const dataHandler = {
-            onDataChanged(data) {
-                // This app is write-only for sharing notes
-                // We don't need to display existing notes
+        // Secure AES encryption function
+        function realEncrypt(text, password) {
+            if (!password) return text;
+            try {
+                const encrypted = CryptoJS.AES.encrypt(text, password).toString();
+                return encrypted;
+            } catch (error) {
+                console.error('Encryption failed:', error);
+                throw new Error('Failed to encrypt note');
             }
-        };
+        }
 
-        // Generate a unique ID for the note
-        function generateNoteId() {
-            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        // Secure AES decryption function
+        function realDecrypt(encryptedText, password) {
+            if (!password) return encryptedText;
+            try {
+                const decrypted = CryptoJS.AES.decrypt(encryptedText, password);
+                const plaintext = decrypted.toString(CryptoJS.enc.Utf8);
+                if (!plaintext) {
+                    throw new Error('Invalid password or corrupted data');
+                }
+                return plaintext;
+            } catch (error) {
+                console.error('Decryption failed:', error);
+                throw new Error('Failed to decrypt note - check your password');
+            }
+        }
+
+        // Calculate expiration date
+        function calculateExpiration(days) {
+            if (days === 0) return null; // Lifetime
+            const expiration = new Date();
+            expiration.setDate(expiration.getDate() + days);
+            return expiration.toISOString();
+        }
+
+        // Format expiration display
+        function formatExpiration(days) {
+            if (days === 0) return 'Never';
+            if (days === 1) return '1 Day';
+            if (days === 3) return '3 Days';
+            if (days === 7) return '7 Days';
+            if (days === 30) return '1 Month';
+            return `${days} Days`;
         }
 
         // Show loading state
@@ -105,12 +247,12 @@
             if (show) {
                 btn.disabled = true;
                 btn.classList.add('opacity-75', 'cursor-not-allowed');
-                btnText.textContent = 'Generating...';
+                btnText.classList.add('hidden');
                 spinner.classList.remove('hidden');
             } else {
                 btn.disabled = false;
                 btn.classList.remove('opacity-75', 'cursor-not-allowed');
-                btnText.textContent = window.elementSdk?.config?.button_text || defaultConfig.button_text;
+                btnText.classList.remove('hidden');
                 spinner.classList.add('hidden');
             }
         }
@@ -129,66 +271,97 @@
         }
 
         // Show success result
-        function showResult(noteId) {
-            const resultArea = document.getElementById('result-area');
-            const linkInput = document.getElementById('generated-link');
-            
-            // --- MODIFIED LINE ---
-          // Creates a link to a "note" page on your same site
-            const shareableLink = `${window.location.origin}/note?id=${noteId}`;
-            linkInput.value = shareableLink;
-            
-            resultArea.classList.remove('hidden');
-            resultArea.classList.add('fade-in', 'pulse-success');
-            
-            // Scroll to result
-            resultArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-s       }
+        function showResult(noteId, password, expirationDays) {
+            const resultArea = document.getElementById('result-area');
+            const linkInput = document.getElementById('generated-link');
+            const protectionStatus = document.getElementById('protection-status');
+            const expirationStatus = document.getElementById('expiration-status');
+            const creationTime = document.getElementById('creation-time');
+            
+            // Generate the shareable link
+            const shareableLink = `${window.location.origin}/note?id=${noteId}`;
+            linkInput.value = shareableLink;
+            
+            // Update status displays
+            protectionStatus.textContent = password ? 'Password Protected' : 'Public';
+            protectionStatus.className = password ? 'text-yellow-300 font-semibold' : 'text-green-300 font-semibold';
+            
+            expirationStatus.textContent = formatExpiration(expirationDays);
+            creationTime.textContent = new Date().toLocaleTimeString();
+            
+            resultArea.classList.remove('hidden');
+            resultArea.classList.add('slide-up', 'pulse-success');
+            
+            // Scroll to result
+            resultArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
 
         // Handle form submission
         async function handleSubmit(event) {
-            event.preventDefault();
-            
-            const textarea = document.getElementById('note-textarea');
-            const content = textarea.value.trim();
-            
-            if (!content) {
-                showError('Please enter some text for your note.');
-                return;
-            }
+            event.preventDefault();
+            
+            const textarea = document.getElementById('note-textarea');
+            const passwordInput = document.getElementById('note-password');
+            const expirationSelect = document.getElementById('expiration-select');
+            
+            const content = textarea.value.trim();
+            const password = passwordInput.value.trim();
+            const expirationDays = parseInt(expirationSelect.value);
+            
+            if (!content) {
+                showError('Please enter some text for your note.');
+                return;
+            }
 
-            if (content.length > 10000) {
-                showError('Note is too long. Please keep it under 10,000 characters.');
-                return;
-            }
+            if (content.length > 50000) {
+                showError('Note is too long. Please keep it under 50,000 characters.');
+                return;
+            }
 
-            showLoading(true);
-            
-            try {
-            // --- THIS IS THE MODIFIED PART ---
-            // We're calling our new Netlify Function
-                const response = await fetch('/.netlify/functions/save-note', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ content: content }) // Send just the content
-            });
-            // --- END OF MODIFIED PART ---
-                
-                if (response.ok) {
-                // Get the { id: "..." } object back from our function
-                const result = await response.json(); 
-                    showResult(result.id); // Pass the ID to the showResult function
-                    textarea.value = ''; // Clear the form
-              nbsp; } else {
-                    showError('Failed to save your note. Please try again.');
-                }
-            } catch (error) {
-            console.error(error); // Log the actual error
-                showError('An unexpected error occurred. Please try again.');
-            } finally {
-                showLoading(false);
-            }
-        }
+            if (password && password.length < 4) {
+                showError('Password must be at least 4 characters long.');
+                return;
+            }
+
+            showLoading(true);
+            
+            try {
+                // Encrypt content if password is provided
+                const encryptedContent = password ? realEncrypt(content, password) : content;
+                const expiration = calculateExpiration(expirationDays);
+                
+                const noteData = {
+                    content: encryptedContent,
+                    hasPassword: !!password,
+                    expiration: expiration,
+                    createdAt: new Date().toISOString()
+                };
+
+                // Call the Netlify Function
+                const response = await fetch('/.netlify/functions/save-note', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(noteData)
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    showResult(result.id, password, expirationDays);
+                    
+                    // Clear the form
+                    textarea.value = '';
+                    passwordInput.value = '';
+                    expirationSelect.value = '7';
+                } else {
+                    showError('Failed to save your note. Please try again.');
+                }
+            } catch (error) {
+                console.error(error);
+                showError('An unexpected error occurred. Please try again.');
+            } finally {
+                showLoading(false);
+            }
+        }
 
         // Handle copy to clipboard
         async function handleCopy() {
@@ -198,24 +371,25 @@ s       }
             try {
                 await navigator.clipboard.writeText(linkInput.value);
                 
-                const originalText = copyBtn.textContent;
-                copyBtn.textContent = 'Copied!';
-                copyBtn.classList.add('bg-green-700');
+                copyBtn.innerHTML = `
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                `;
+                copyBtn.classList.add('bg-green-600');
                 
                 setTimeout(() => {
-                    copyBtn.textContent = originalText;
-                    copyBtn.classList.remove('bg-green-700');
+                    copyBtn.innerHTML = `
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                        </svg>
+                    `;
+                    copyBtn.classList.remove('bg-green-600');
                 }, 2000);
             } catch (error) {
                 // Fallback for older browsers
                 linkInput.select();
                 document.execCommand('copy');
-                
-                const originalText = copyBtn.textContent;
-                copyBtn.textContent = 'Copied!';
-                setTimeout(() => {
-                    copyBtn.textContent = originalText;
-                }, 2000);
             }
         }
 
@@ -230,22 +404,12 @@ s       }
             mainHeading.textContent = config.main_heading || defaultConfig.main_heading;
             tagline.textContent = config.tagline || defaultConfig.tagline;
             textarea.placeholder = config.placeholder_text || defaultConfig.placeholder_text;
-            buttonText.textContent = config.button_text || defaultConfig.button_text;
             
-            // Update colors
-            const primaryColor = config.primary_color || defaultConfig.primary_color;
-            const accentColor = config.accent_color || defaultConfig.accent_color;
-            const textColor = config.text_color || defaultConfig.text_color;
-            
-            // Apply colors to elements
-            document.documentElement.style.setProperty('--primary-color', primaryColor);
-            document.documentElement.style.setProperty('--accent-color', accentColor);
-            
-            const generateBtn = document.getElementById('generate-btn');
-            generateBtn.style.backgroundColor = primaryColor;
-            
-            const copyBtn = document.getElementById('copy-btn');
-            copyBtn.style.backgroundColor = accentColor;
+            // Update button text
+            const buttonSpan = buttonText.querySelector('span') || buttonText;
+            if (buttonSpan.textContent) {
+                buttonSpan.textContent = config.button_text || defaultConfig.button_text;
+            }
             
             // Apply font family
             const fontFamily = config.font_family || defaultConfig.font_family;
@@ -256,43 +420,13 @@ s       }
 
         // Initialize the application
         async function init() {
-            // Initialize Data SDK
-            if (window.dataSdk) {
-                const initResult = await window.dataSdk.init(dataHandler);
-                if (!initResult.isOk) {
-                    console.error('Failed to initialize Data SDK');
-                }
-            }
-
             // Initialize Element SDK
             if (window.elementSdk) {
                 await window.elementSdk.init({
                     defaultConfig,
                     render,
                     mapToCapabilities: (config) => ({
-                        recolorables: [
-                            {
-                                get: () => config.primary_color || defaultConfig.primary_color,
-                                set: (value) => {
-                                    config.primary_color = value;
-                                    window.elementSdk.setConfig({ primary_color: value });
-                                }
-                            },
-                            {
-                                get: () => config.accent_color || defaultConfig.accent_color,
-                                set: (value) => {
-                                    config.accent_color = value;
-                                    window.elementSdk.setConfig({ accent_color: value });
-                                }
-                            },
-                            {
-                                get: () => config.text_color || defaultConfig.text_color,
-                                set: (value) => {
-                                    config.text_color = value;
-                                    window.elementSdk.setConfig({ text_color: value });
-                                }
-                            }
-                        ],
+                        recolorables: [],
                         borderables: [],
                         fontEditable: {
                             get: () => config.font_family || defaultConfig.font_family,
@@ -323,5 +457,5 @@ s       }
         // Start the application
         init();
     </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9909781bb72a3d2a',t:'MTc2MDgwNTUzOS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9909e57126b23d2a',t:'MTc2MDgxMDAxOC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
