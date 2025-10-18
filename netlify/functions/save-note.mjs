@@ -1,38 +1,62 @@
-// This imports Netlify's built-in database SDK.
-import { getStore } from "@netlify/blobs";
+// Import the Supabase client
+// You'll need to run: npm install @supabase/supabase-js
+import { createClient } from '@supabase/supabase-js';
 
-export default async (req, context) => {
-  try {
-    // 1. Get the note content sent from the frontend
-    const { content } = await req.json();
+// Import a library to generate short, unique IDs
+// You'll need to run: npm install nanoid
+import { nanoid } from 'nanoid';
 
-    if (!content) {
-      return new Response(JSON.stringify({ error: "No content provided." }), {
-        status: 400,
-      });
+// Connect to your Supabase database
+// Get these from your Supabase project settings.
+// Use Netlify environment variables for security!
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+// This is the main function Netlify will run
+export const handler = async (event) => {
+    
+    // 1. Only allow POST requests
+    if (event.httpMethod !== 'POST') {
+        return { statusCode: 405, body: 'Method Not Allowed' };
     }
 
-    // 2. Generate a unique ID for the note
-    // (Doing this on the backend is safer)
-    const noteId = Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+    try {
+        // 2. Parse the data sent from your frontend
+        const noteData = JSON.parse(event.body);
 
-    // 3. Get your database (Netlify calls it a "store")
-    // We'll name our database "notes"
-    const store = getStore("notes");
+        // 3. Generate a unique, short ID for the note link
+        const noteId = nanoid(8); // Generates a random 8-character ID like 'aB3x_gTz'
 
-    // 4. Save the content to the database
-    // This saves the raw text content using the 'noteId' as the key
-    await store.set(noteId, content);
+        // 4. Save the data to your Supabase table (e.g., a table named "notes")
+        const { data, error } = await supabase
+            .from('notes')
+            .insert({
+                id: noteId,
+                content: noteData.content,
+                has_password: noteData.hasPassword,
+                expires_at: noteData.expiration,
+                created_at: noteData.createdAt
+            })
+            .select()
+            .single();
 
-    // 5. Send the new note's ID back to the frontend
-    return new Response(JSON.stringify({ id: noteId }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
+        // 5. Handle any database errors
+        if (error) {
+            throw error;
+        }
 
-  } catch (error) {
-    return new Response(JSON.stringify({ error: "Failed to save note." }), {
-      status: 500,
-    });
-  }
+        // 6. Success! Send the new note ID back to the frontend
+        return {
+            statusCode: 200,
+            body: JSON.stringify({ id: noteId })
+        };
+
+    } catch (error) {
+        console.error('Error saving note:', error);
+        return {
+            statusCode: 500,
+            body: JSON.stringify({ error: 'Failed to save note.' })
+        };
+    }
 };
